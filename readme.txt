@@ -1,5 +1,5 @@
 # Requirement
-pip install Flask-SQLAlchemy
+pip install Flask-SQLAlchemy Werkzeug
 pip install pytest flask-testing requests
 
 # Archi
