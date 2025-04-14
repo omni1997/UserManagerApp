@@ -144,33 +144,65 @@ def delete_token(id):
 def login():
     data = request.get_json()
 
-    username = data.get('username')
+    name = data.get('name')
     pwd = data.get('password')
 
     # Get user from database
-    user = db.session.query(User).filter_by(name=username).first()
+    user = db.session.query(User).filter_by(name=name).first()
     if not user:
-        return jsonify({"error": "User not found!"}), 404  # User not found
+        return jsonify({"error": "User not found!"}), 404
 
-    # Check if the password matches the stored hash
+    # Check password
     if not check_password_hash(user.hashedPwd, pwd):
-        return jsonify({"error": "Incorrect password"}), 401  # Incorrect password
+        return jsonify({"error": "Incorrect password"}), 401
 
     # Check if a token already exists for the user
     token = db.session.query(Token).filter_by(user_id=user.id).first()
-    roles = [role.name for role in user.roles]
 
     if not token:
-        # Create a new token if it does not exist
-        new_token = Token(
+        token = Token(
             token=secrets.token_hex(32),
             user_id=user.id,
-            roles = roles
+            roles=user.roles.copy()
         )
-        db.session.add(new_token)
+        db.session.add(token)
         db.session.commit()
-        token = new_token
 
     return jsonify({
-        "token": token.token  # Retourner uniquement le token
-    })
+        "token": token.token
+    }), 200
+
+
+@user_bp.route('/assign-role', methods=['POST'])
+def assign_role_to_user():
+    data = request.get_json()
+
+    # Get user and role from request
+    user_name = data.get('user_name')
+    role_name = data.get('role_name')
+
+    # Fetch user and role from the database
+    user = db.session.query(User).filter_by(name=user_name).first()
+    role = db.session.query(Role).filter_by(name=role_name).first()
+
+    # Check if user or role exists
+    if not user:
+        return jsonify({"error": f"User '{user_name}' not found!"}), 404
+    if not role:
+        return jsonify({"error": f"Role '{role_name}' not found!"}), 404
+
+    # Force loading of the relationship if not already loaded
+    if not hasattr(user, 'roles') or user.roles is None:
+        user.roles = []
+
+    # Check if the user already has the role
+    if any(r.id == role.id for r in user.roles):
+        return jsonify({"message": f"User '{user_name}' already has role '{role_name}'."}), 200
+
+    # Assign role to user
+    user.roles.append(role)
+    db.session.add(user)  # Assure que l’objet est bien attaché à la session
+    db.session.commit()
+
+    return jsonify({"message": f"Role '{role_name}' assigned to user '{user_name}' successfully."}), 200
+

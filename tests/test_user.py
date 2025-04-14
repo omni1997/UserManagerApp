@@ -2,7 +2,7 @@ import pytest
 from werkzeug.security import generate_password_hash
 from app import create_app
 from app.database import db
-from app.models.user import User, Role, Token
+from app.models.user import User, Role, Token, ROLE_A, ROLE_B, ROLE_C
 
 @pytest.fixture
 def app():
@@ -159,14 +159,14 @@ def test_delete_token(client):
 def test_login(client, create_user):
     """Test for the login route"""
     # Perform login for the first time
-    response = client.post('/login', json={'username': 'Test User', 'password': 'password123'})
+    response = client.post('/login', json={'name': 'Test User', 'password': 'password123'})
 
     assert response.status_code == 200
     assert b'token' in response.data  # Ensure that the token is returned
     first_token = response.json.get('token')
 
     # Perform login again to check if the token is the same
-    response = client.post('/login', json={'username': 'Test User', 'password': 'password123'})
+    response = client.post('/login', json={'name': 'Test User', 'password': 'password123'})
 
     assert response.status_code == 200
     assert b'token' in response.data  # Ensure that the token is returned again
