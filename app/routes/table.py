@@ -48,7 +48,18 @@ def create_table_routes(model, prefix, roles_required):
         else:
             return jsonify({"message": f"Entry not found in {prefix}!"}), 404
 
+    @bp.route(f'/{prefix}', methods=['GET'])
+    @require_roles(roles_required)
+    def get_all_entries():
+        entries = db.session.query(model).all()
+        return jsonify([
+            {"id": entry.id, "data": entry.data} for entry in entries
+        ])
+
     return bp
+
+
+
 
 # Instanciation des Blueprints
 table_a_bp = create_table_routes(TableA, 'tableA', [])

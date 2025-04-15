@@ -137,6 +137,13 @@ def delete_token(id):
     else:
         return jsonify({"message": "Token not found!"}), 404
 
+@user_bp.route('/token', methods=['GET'])
+def get_all_tokens():
+    tokens = db.session.query(Token).all()
+    return jsonify([
+        {"id": token.id, "token": token.token, "user_id": token.user_id} for token in tokens
+    ])
+
 ##############################################
 #                 OTHER                      #
 ##############################################
