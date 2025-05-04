@@ -4,6 +4,7 @@ from app import create_app
 from app.database import db
 from app.models.user import User, Role, Token, ROLE_A, ROLE_B, ROLE_C
 
+
 @pytest.fixture
 def app():
     # Create the test application
